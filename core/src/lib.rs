@@ -1,7 +1,5 @@
 //! Core layer for EVM.
 
-#![deny(warnings)]
-#![forbid(unsafe_code, unused_variables, unused_imports)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
@@ -170,4 +168,32 @@ impl Machine {
 			}
 		}
 	}
+}
+
+pub struct GasProfile(u8);
+
+impl GasProfile {
+	pub fn new(cost: u8) -> Self {
+		unsafe { gas_profile_start() }
+		GasProfile(cost)
+	}
+}
+
+impl Drop for GasProfile {
+	fn drop(&mut self) {
+		unsafe { gas_profile_stop(self.0 as u32) }
+	}
+}
+
+extern "C" {
+	fn gas_profile_start();
+	fn gas_profile_stop(cost: u32);
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+mod stub {
+	#[no_mangle]
+	extern "C" fn gas_profile_start() {}
+	#[no_mangle]
+	extern "C" fn gas_profile_stop(cost: u32) {}
 }
