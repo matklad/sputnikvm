@@ -551,6 +551,7 @@ pub fn dynamic_opcode_cost<H: Handler>(
 		Opcode::RETURNDATASIZE | Opcode::RETURNDATACOPY => GasCost::Invalid,
 
 		Opcode::SSTORE if !is_static => {
+			let _p = evm_core::GasProfile::new(0);
 			let index = stack.peek(0)?;
 			let value = stack.peek(1)?;
 			storage_target = StorageTarget::Slot(address, index);
