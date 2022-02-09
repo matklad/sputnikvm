@@ -16,439 +16,777 @@ pub enum Control {
 	Trap(Opcode),
 }
 
-fn eval_stop(_state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	Control::Exit(ExitSucceed::Stopped.into())
+extern "C" {
+	fn gas_profile_start();
+	fn gas_profile_stop(cost: u32);
 }
 
-fn eval_add(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_tuple!(state, overflowing_add)
+#[cfg(not(target_arch = "wasm32"))]
+mod stub {
+	#[no_mangle]
+	extern "C" fn gas_profile_start() {}
+	#[no_mangle]
+	extern "C" fn gas_profile_stop(cost: u32) {}
 }
 
-fn eval_mul(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_tuple!(state, overflowing_mul)
+fn eval_stop(_state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = Control::Exit(ExitSucceed::Stopped.into());
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_sub(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_tuple!(state, overflowing_sub)
+fn eval_add(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_tuple!(state, overflowing_add);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_div(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_fn!(state, self::arithmetic::div)
+fn eval_mul(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_tuple!(state, overflowing_mul);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_sdiv(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_fn!(state, self::arithmetic::sdiv)
+fn eval_sub(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_tuple!(state, overflowing_sub);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_mod(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_fn!(state, self::arithmetic::rem)
+fn eval_div(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_fn!(state, self::arithmetic::div);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_smod(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_fn!(state, self::arithmetic::srem)
+fn eval_sdiv(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_fn!(state, self::arithmetic::sdiv);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_addmod(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op3_u256_fn!(state, self::arithmetic::addmod)
+fn eval_mod(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_fn!(state, self::arithmetic::rem);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_mulmod(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op3_u256_fn!(state, self::arithmetic::mulmod)
+fn eval_smod(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_fn!(state, self::arithmetic::srem);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_exp(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_fn!(state, self::arithmetic::exp)
+fn eval_addmod(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op3_u256_fn!(state, self::arithmetic::addmod);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_signextend(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_fn!(state, self::arithmetic::signextend)
+fn eval_mulmod(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op3_u256_fn!(state, self::arithmetic::mulmod);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_lt(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_bool_ref!(state, lt)
+fn eval_exp(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_fn!(state, self::arithmetic::exp);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_gt(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_bool_ref!(state, gt)
+fn eval_signextend(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_fn!(state, self::arithmetic::signextend);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_slt(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_fn!(state, self::bitwise::slt)
+fn eval_lt(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_bool_ref!(state, lt);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_sgt(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_fn!(state, self::bitwise::sgt)
+fn eval_gt(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_bool_ref!(state, gt);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_eq(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_bool_ref!(state, eq)
+fn eval_slt(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_fn!(state, self::bitwise::slt);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_iszero(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op1_u256_fn!(state, self::bitwise::iszero)
+fn eval_sgt(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_fn!(state, self::bitwise::sgt);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_and(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256!(state, bitand)
+fn eval_eq(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_bool_ref!(state, eq);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_or(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256!(state, bitor)
+fn eval_iszero(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op1_u256_fn!(state, self::bitwise::iszero);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_xor(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256!(state, bitxor)
+fn eval_and(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256!(state, bitand);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_not(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op1_u256_fn!(state, self::bitwise::not)
+fn eval_or(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256!(state, bitor);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_byte(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_fn!(state, self::bitwise::byte)
+fn eval_xor(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256!(state, bitxor);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_shl(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_fn!(state, self::bitwise::shl)
+fn eval_not(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op1_u256_fn!(state, self::bitwise::not);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_shr(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_fn!(state, self::bitwise::shr)
+fn eval_byte(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_fn!(state, self::bitwise::byte);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_sar(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	op2_u256_fn!(state, self::bitwise::sar)
+fn eval_shl(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_fn!(state, self::bitwise::shl);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_codesize(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::codesize(state)
+fn eval_shr(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_fn!(state, self::bitwise::shr);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_codecopy(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::codecopy(state)
+fn eval_sar(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = op2_u256_fn!(state, self::bitwise::sar);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_calldataload(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::calldataload(state)
+fn eval_codesize(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::codesize(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_calldatasize(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::calldatasize(state)
+fn eval_codecopy(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::codecopy(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_calldatacopy(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::calldatacopy(state)
+fn eval_calldataload(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::calldataload(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_pop(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::pop(state)
+fn eval_calldatasize(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::calldatasize(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_mload(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::mload(state)
+fn eval_calldatacopy(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::calldatacopy(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_mstore(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::mstore(state)
+fn eval_pop(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::pop(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_mstore8(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::mstore8(state)
+fn eval_mload(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::mload(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_jump(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::jump(state)
+fn eval_mstore(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::mstore(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_jumpi(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::jumpi(state)
+fn eval_mstore8(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::mstore8(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_pc(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::pc(state, position)
+fn eval_jump(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::jump(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_msize(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::msize(state)
+fn eval_jumpi(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::jumpi(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_jumpdest(_state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	Control::Continue(1)
+fn eval_pc(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::pc(state, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push1(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 1, position)
+fn eval_msize(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::msize(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push2(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 2, position)
+fn eval_jumpdest(_state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = Control::Continue(1);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push3(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 3, position)
+fn eval_push1(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 1, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push4(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 4, position)
+fn eval_push2(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 2, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push5(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 5, position)
+fn eval_push3(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 3, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push6(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 6, position)
+fn eval_push4(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 4, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push7(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 7, position)
+fn eval_push5(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 5, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push8(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 8, position)
+fn eval_push6(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 6, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push9(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 9, position)
+fn eval_push7(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 7, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push10(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 10, position)
+fn eval_push8(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 8, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push11(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 11, position)
+fn eval_push9(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 9, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push12(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 12, position)
+fn eval_push10(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 10, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push13(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 13, position)
+fn eval_push11(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 11, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push14(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 14, position)
+fn eval_push12(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 12, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push15(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 15, position)
+fn eval_push13(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 13, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push16(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 16, position)
+fn eval_push14(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 14, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push17(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 17, position)
+fn eval_push15(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 15, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push18(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 18, position)
+fn eval_push16(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 16, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push19(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 19, position)
+fn eval_push17(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 17, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push20(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 20, position)
+fn eval_push18(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 18, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push21(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 21, position)
+fn eval_push19(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 19, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push22(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 22, position)
+fn eval_push20(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 20, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push23(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 23, position)
+fn eval_push21(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 21, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push24(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 24, position)
+fn eval_push22(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 22, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push25(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 25, position)
+fn eval_push23(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 23, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push26(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 26, position)
+fn eval_push24(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 24, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push27(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 27, position)
+fn eval_push25(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 25, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push28(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 28, position)
+fn eval_push26(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 26, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push29(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 29, position)
+fn eval_push27(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 27, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push30(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 30, position)
+fn eval_push28(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 28, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push31(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 31, position)
+fn eval_push29(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 29, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_push32(state: &mut Machine, _opcode: Opcode, position: usize) -> Control {
-	self::misc::push(state, 32, position)
+fn eval_push30(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 30, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup1(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 1)
+fn eval_push31(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 31, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup2(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 2)
+fn eval_push32(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::push(state, 32, position);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup3(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 3)
+fn eval_dup1(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 1);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup4(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 4)
+fn eval_dup2(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 2);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup5(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 5)
+fn eval_dup3(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 3);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup6(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 6)
+fn eval_dup4(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 4);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup7(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 7)
+fn eval_dup5(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 5);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup8(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 8)
+fn eval_dup6(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 6);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup9(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 9)
+fn eval_dup7(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 7);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup10(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 10)
+fn eval_dup8(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 8);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup11(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 11)
+fn eval_dup9(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 9);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup12(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 12)
+fn eval_dup10(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 10);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup13(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 13)
+fn eval_dup11(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 11);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup14(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 14)
+fn eval_dup12(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 12);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup15(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 15)
+fn eval_dup13(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 13);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_dup16(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::dup(state, 16)
+fn eval_dup14(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 14);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap1(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 1)
+fn eval_dup15(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 15);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap2(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 2)
+fn eval_dup16(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::dup(state, 16);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap3(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 3)
+fn eval_swap1(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 1);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap4(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 4)
+fn eval_swap2(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 2);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap5(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 5)
+fn eval_swap3(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 3);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap6(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 6)
+fn eval_swap4(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 4);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap7(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 7)
+fn eval_swap5(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 5);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap8(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 8)
+fn eval_swap6(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 6);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap9(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 9)
+fn eval_swap7(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 7);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap10(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 10)
+fn eval_swap8(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 8);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap11(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 11)
+fn eval_swap9(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 9);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap12(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 12)
+fn eval_swap10(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 10);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap13(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 13)
+fn eval_swap11(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 11);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap14(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 14)
+fn eval_swap12(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 12);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap15(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 15)
+fn eval_swap13(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 13);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_swap16(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::swap(state, 16)
+fn eval_swap14(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 14);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_return(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::ret(state)
+fn eval_swap15(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 15);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_revert(state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	self::misc::revert(state)
+fn eval_swap16(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::swap(state, 16);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
-fn eval_invalid(_state: &mut Machine, _opcode: Opcode, _position: usize) -> Control {
-	Control::Exit(ExitError::DesignatedInvalid.into())
+fn eval_return(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::ret(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
+}
+
+fn eval_revert(state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = self::misc::revert(state);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
+}
+
+fn eval_invalid(_state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
+	unsafe { gas_profile_start() }
+	let res = Control::Exit(ExitError::DesignatedInvalid.into());
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
 fn eval_external(_state: &mut Machine, opcode: Opcode, _position: usize) -> Control {
-	Control::Trap(opcode)
+	unsafe { gas_profile_start() }
+	let res = Control::Trap(opcode);
+	unsafe { gas_profile_stop(opcode.0 as u32) }
+	res
 }
 
 #[inline]
+#[cfg(FALSE)]
 pub fn eval(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
 	static TABLE: [fn(state: &mut Machine, opcode: Opcode, position: usize) -> Control; 256] = {
 		let mut table = [eval_external as _; 256];
@@ -569,4 +907,125 @@ pub fn eval(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
 	};
 
 	TABLE[opcode.as_usize()](state, opcode, position)
+}
+
+// 118815126965304
+// 110436615921984
+// 110741289050832
+#[inline]
+pub fn eval(state: &mut Machine, opcode: Opcode, position: usize) -> Control {
+	(match opcode {
+		Opcode::STOP => eval_stop,
+		Opcode::ADD => eval_add,
+		Opcode::MUL => eval_mul,
+		Opcode::SUB => eval_sub,
+		Opcode::DIV => eval_div,
+		Opcode::SDIV => eval_sdiv,
+		Opcode::MOD => eval_mod,
+		Opcode::SMOD => eval_smod,
+		Opcode::ADDMOD => eval_addmod,
+		Opcode::MULMOD => eval_mulmod,
+		Opcode::EXP => eval_exp,
+		Opcode::SIGNEXTEND => eval_signextend,
+		Opcode::LT => eval_lt,
+		Opcode::GT => eval_gt,
+		Opcode::SLT => eval_slt,
+		Opcode::SGT => eval_sgt,
+		Opcode::EQ => eval_eq,
+		Opcode::ISZERO => eval_iszero,
+		Opcode::AND => eval_and,
+		Opcode::OR => eval_or,
+		Opcode::XOR => eval_xor,
+		Opcode::NOT => eval_not,
+		Opcode::BYTE => eval_byte,
+		Opcode::SHL => eval_shl,
+		Opcode::SHR => eval_shr,
+		Opcode::SAR => eval_sar,
+		Opcode::CODESIZE => eval_codesize,
+		Opcode::CODECOPY => eval_codecopy,
+		Opcode::CALLDATALOAD => eval_calldataload,
+		Opcode::CALLDATASIZE => eval_calldatasize,
+		Opcode::CALLDATACOPY => eval_calldatacopy,
+		Opcode::POP => eval_pop,
+		Opcode::MLOAD => eval_mload,
+		Opcode::MSTORE => eval_mstore,
+		Opcode::MSTORE8 => eval_mstore8,
+		Opcode::JUMP => eval_jump,
+		Opcode::JUMPI => eval_jumpi,
+		Opcode::PC => eval_pc,
+		Opcode::MSIZE => eval_msize,
+		Opcode::JUMPDEST => eval_jumpdest,
+
+		Opcode::PUSH1 => eval_push1,
+		Opcode::PUSH2 => eval_push2,
+		Opcode::PUSH3 => eval_push3,
+		Opcode::PUSH4 => eval_push4,
+		Opcode::PUSH5 => eval_push5,
+		Opcode::PUSH6 => eval_push6,
+		Opcode::PUSH7 => eval_push7,
+		Opcode::PUSH8 => eval_push8,
+		Opcode::PUSH9 => eval_push9,
+		Opcode::PUSH10 => eval_push10,
+		Opcode::PUSH11 => eval_push11,
+		Opcode::PUSH12 => eval_push12,
+		Opcode::PUSH13 => eval_push13,
+		Opcode::PUSH14 => eval_push14,
+		Opcode::PUSH15 => eval_push15,
+		Opcode::PUSH16 => eval_push16,
+		Opcode::PUSH17 => eval_push17,
+		Opcode::PUSH18 => eval_push18,
+		Opcode::PUSH19 => eval_push19,
+		Opcode::PUSH20 => eval_push20,
+		Opcode::PUSH21 => eval_push21,
+		Opcode::PUSH22 => eval_push22,
+		Opcode::PUSH23 => eval_push23,
+		Opcode::PUSH24 => eval_push24,
+		Opcode::PUSH25 => eval_push25,
+		Opcode::PUSH26 => eval_push26,
+		Opcode::PUSH27 => eval_push27,
+		Opcode::PUSH28 => eval_push28,
+		Opcode::PUSH29 => eval_push29,
+		Opcode::PUSH30 => eval_push30,
+		Opcode::PUSH31 => eval_push31,
+		Opcode::PUSH32 => eval_push32,
+
+		Opcode::DUP1 => eval_dup1,
+		Opcode::DUP2 => eval_dup2,
+		Opcode::DUP3 => eval_dup3,
+		Opcode::DUP4 => eval_dup4,
+		Opcode::DUP5 => eval_dup5,
+		Opcode::DUP6 => eval_dup6,
+		Opcode::DUP7 => eval_dup7,
+		Opcode::DUP8 => eval_dup8,
+		Opcode::DUP9 => eval_dup9,
+		Opcode::DUP10 => eval_dup10,
+		Opcode::DUP11 => eval_dup11,
+		Opcode::DUP12 => eval_dup12,
+		Opcode::DUP13 => eval_dup13,
+		Opcode::DUP14 => eval_dup14,
+		Opcode::DUP15 => eval_dup15,
+		Opcode::DUP16 => eval_dup16,
+
+		Opcode::SWAP1 => eval_swap1,
+		Opcode::SWAP2 => eval_swap2,
+		Opcode::SWAP3 => eval_swap3,
+		Opcode::SWAP4 => eval_swap4,
+		Opcode::SWAP5 => eval_swap5,
+		Opcode::SWAP6 => eval_swap6,
+		Opcode::SWAP7 => eval_swap7,
+		Opcode::SWAP8 => eval_swap8,
+		Opcode::SWAP9 => eval_swap9,
+		Opcode::SWAP10 => eval_swap10,
+		Opcode::SWAP11 => eval_swap11,
+		Opcode::SWAP12 => eval_swap12,
+		Opcode::SWAP13 => eval_swap13,
+		Opcode::SWAP14 => eval_swap14,
+		Opcode::SWAP15 => eval_swap15,
+		Opcode::SWAP16 => eval_swap16,
+
+		Opcode::RETURN => eval_return,
+		Opcode::REVERT => eval_revert,
+		Opcode::INVALID => eval_invalid,
+		_ => eval_external,
+	}(state, opcode, position))
 }
