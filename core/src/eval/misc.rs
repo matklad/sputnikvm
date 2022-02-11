@@ -125,9 +125,9 @@ pub fn jump(state: &mut Machine) -> Control {
 #[inline]
 pub fn jumpi(state: &mut Machine) -> Control {
 	pop_u256!(state, dest);
-	pop_h256!(state, value);
+	pop_u256!(state, value);
 
-	if value != H256::zero() {
+	if value != U256::zero() {
 		let dest = as_usize_or_fail!(dest, ExitError::InvalidJump);
 		if state.valids.is_valid(dest) {
 			Control::Jump(dest)
