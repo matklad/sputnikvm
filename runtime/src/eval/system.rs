@@ -167,7 +167,7 @@ pub fn blockhash<H: Handler>(runtime: &mut Runtime, handler: &H) -> Control<H> {
 }
 
 pub fn coinbase<H: Handler>(runtime: &mut Runtime, handler: &H) -> Control<H> {
-	push_h256!(runtime, handler.block_coinbase().into());
+	push_h256!(runtime, handler.block_coinbase());
 	Control::Continue
 }
 
